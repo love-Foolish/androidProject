@@ -2,27 +2,19 @@ package com.app.qiuhutu.cookman;
 
 public class Menu {
 
-    private String name;
+    private String title;
     private int imgId;
 
-    public Menu(String name, int imgId) {
-        this.name = name;
+    public Menu(String title, int imgId) {
+        this.title = title;
         this.imgId = imgId;
     }
 
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
     public int getImgId() {
         return imgId;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setImgId(int imgId) {
-        this.imgId = imgId;
     }
 }
