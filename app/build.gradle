@@ -30,6 +30,11 @@ dependencies {
     implementation 'com.android.support:design:27.1.1'
     //noinspection GradleDynamicVersion
     implementation 'com.facebook.fresco:fresco:1.9.0'
+    //noinspection GradlePath
+    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
+    implementation 'com.google.code.gson:gson:2.8.4'
+    implementation 'org.litepal.android:core:1.6.1'
+    implementation 'com.facebook.stetho:stetho:1.5.0'
 }
 repositories {
     mavenCentral()

@@ -5,15 +5,35 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import com.app.qiuhutu.cookman.Adapters.ChannelRecyclerVIewAdapter;
 import com.app.qiuhutu.cookman.Adapters.MenuAdapter;
+import com.app.qiuhutu.cookman.util.Utility;
 import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.stetho.Stetho;
+import com.google.gson.JsonObject;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity implements MenuAdapter.OnItemClickListener{
 
@@ -23,12 +43,36 @@ public class MainActivity extends AppCompatActivity implements MenuAdapter.OnIte
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //使用chrome查看数据库
+        Stetho.initializeWithDefaults(this);
         Fresco.initialize(this);//初始化Fresco
         setContentView(R.layout.activity_main);
 
         setChannel();
         setItemList();
+        getMenuCategory();
 
+    }
+
+    private void getMenuCategory() {
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    OkHttpClient client = new OkHttpClient();
+                    Request request = new Request.Builder().
+                            url("http://apicloud.mob.com/v1/cook/category/query?key=520520test").
+                            build();
+                    Response response = client.newCall(request).execute();
+                    String responseData = response.body().string();
+                    Utility.handleMenuCategoryResponse(responseData);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     private void setItemList(){
