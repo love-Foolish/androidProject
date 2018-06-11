@@ -8,6 +8,9 @@ public class MenuChildsCategory extends DataSupport{
 
     private String name;
 
+    private String parentId;
+
+
     public String getCtgId() {
         return ctgId;
     }
@@ -22,5 +25,13 @@ public class MenuChildsCategory extends DataSupport{
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
     }
 }

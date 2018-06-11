@@ -23,6 +23,7 @@
         </android.support.v7.widget.RecyclerView>
 
         <ImageButton
+            android:id="@+id/btn_channelEdit"
             android:background="#fff"
             android:layout_weight="10"
             android:layout_width="match_parent"

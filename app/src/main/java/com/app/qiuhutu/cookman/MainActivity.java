@@ -7,38 +7,35 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.app.qiuhutu.cookman.Adapters.ChannelRecyclerVIewAdapter;
-import com.app.qiuhutu.cookman.Adapters.MenuAdapter;
+import com.app.qiuhutu.cookman.adapters.ChannelRecyclerVIewAdapter;
+import com.app.qiuhutu.cookman.adapters.MenuAdapter;
+import com.app.qiuhutu.cookman.db.Menu;
+import com.app.qiuhutu.cookman.db.MenuChildsCategory;
 import com.app.qiuhutu.cookman.util.Utility;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.stetho.Stetho;
-import com.google.gson.JsonObject;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.litepal.crud.DataSupport;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static com.app.qiuhutu.cookman.tools.AttachHttpGetParams.attachHttpGetParams;
+
 public class MainActivity extends AppCompatActivity implements MenuAdapter.OnItemClickListener{
 
     private List<String> channelList = new ArrayList<>();
     private List<Menu> menuList  = new ArrayList<>();
+    private String curCtgId = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,9 +45,19 @@ public class MainActivity extends AppCompatActivity implements MenuAdapter.OnIte
         Fresco.initialize(this);//初始化Fresco
         setContentView(R.layout.activity_main);
 
+        getMenuCategory();
+        getMenuTag();
         setChannel();
         setItemList();
-        getMenuCategory();
+
+        ImageButton spreadBtn = (ImageButton) findViewById(R.id.btn_channelEdit);
+        spreadBtn.setOnClickListener(new ImageButton.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, ChannelEdit.class);
+                startActivity(intent);
+            }
+        });
 
     }
 
@@ -59,16 +66,47 @@ public class MainActivity extends AppCompatActivity implements MenuAdapter.OnIte
         new Thread(new Runnable() {
             @Override
             public void run() {
-
                 try {
                     OkHttpClient client = new OkHttpClient();
                     Request request = new Request.Builder().
-                            url("http://apicloud.mob.com/v1/cook/category/query?key=520520test").
+                            url("http://apicloud.mob.com/v1/cook/category/query?key=260d173130050").
                             build();
                     Response response = client.newCall(request).execute();
                     String responseData = response.body().string();
                     Utility.handleMenuCategoryResponse(responseData);
                 } catch (IOException e) {
+                    Log.i("weberror", "连接网络失败");
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    private void getMenuTag() {
+
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                LinkedHashMap<String, String> hashMap = new LinkedHashMap<>();
+                hashMap.put("page", "1");
+                hashMap.put("name", "%E7%BA%A2%E7%83%A7%E8%82%89");
+                hashMap.put("cid", "0010001007");
+                hashMap.put("key", "260d173130050");
+                hashMap.put("size", "20");
+                Log.i("attachHttpGetParams", attachHttpGetParams("http://apicloud.mob.com/v1/cook/menu/search", hashMap));
+
+                try {
+                    OkHttpClient client = new OkHttpClient();
+                    Request request = new Request.Builder().
+                            url(attachHttpGetParams("http://apicloud.mob.com/v1/cook/menu/search", hashMap)).
+                            build();
+                    Response response = client.newCall(request).execute();
+                    String responseData = response.body().string();
+                    Utility.handleMenuByTagResponse(responseData);
+                } catch (IOException e) {
+                    Log.i("weberror", "连接网络失败");
                     e.printStackTrace();
                 }
             }
@@ -80,21 +118,9 @@ public class MainActivity extends AppCompatActivity implements MenuAdapter.OnIte
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.list_item_view);
         LinearLayoutManager manager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(manager);
-        MenuAdapter adapter = new MenuAdapter(menuList, (MenuAdapter.OnItemClickListener) this);
+        MenuAdapter adapter = new MenuAdapter(menuList,MainActivity.this);
         recyclerView.setAdapter(adapter);
     }
-
-    private void initItemList() {
-        Menu menu1 = new Menu("小龙虾",R.drawable.list_image1);
-        menuList.add(menu1);
-        Menu menu2 = new Menu("水饺", R.drawable.list_image2);
-        menuList.add(menu2);
-        Menu menu3 = new Menu("北京烤鸭",R.drawable.list_image3);
-        menuList.add(menu3);
-        Menu menu4 = new Menu("红烧肉", R.drawable.list_image4);
-        menuList.add(menu4);
-    }
-
 
     private void setChannel() {
         initChannel();
@@ -106,25 +132,39 @@ public class MainActivity extends AppCompatActivity implements MenuAdapter.OnIte
         recyclerView.setAdapter(adapter);
     }
 
+    private void initItemList() {
+        List<Menu> menus;
+
+        menus = DataSupport.findAll(Menu.class);
+        if(menus.size() > 0){
+            menuList.clear();
+            for(int i=0 ; i< 20; i++){
+                Menu menu = menus.get(i);
+                menuList.add(menu);
+            }
+        }
+    }
+
     private void initChannel() {
-        channelList.add("小吃");
-        channelList.add("荤菜");
-        channelList.add("素菜");
-        channelList.add("糖粥");
-        channelList.add("西点");
-        channelList.add("主食");
-        channelList.add("饮品");
-        channelList.add("便当");
-        channelList.add("红烧");
+
+        List<MenuChildsCategory> menuChildsCategoryList;
+
+        menuChildsCategoryList = DataSupport.findAll(MenuChildsCategory.class);
+        if(menuChildsCategoryList.size() > 0){
+            channelList.clear();
+            for (int i = 0 ; i < 8; i++){
+                MenuChildsCategory menuChildsCategory = menuChildsCategoryList.get(i);
+                channelList.add(menuChildsCategory.getName());
+            }
+        }
+
     }
 
 
 
     @Override
-    public void onItemClick(View view, int position) {
-        //TODO 点击单项跳转到详情页
-        //Toast.makeText(MainActivity.this," 测试"+menuList.get(position).getTitle(),Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(MainActivity.this, CookDetailActivity.class);
-        startActivity(intent);
+    public void onItemclick(Menu menu) {
+        Log.i("======","可以点击吗？");
+        Toast.makeText(MainActivity.this,menu.getName(),Toast.LENGTH_SHORT).show();
     }
 }

@@ -2,11 +2,12 @@
 
     <dbname value = "cook_man"/>
 
-    <version value = "1.0"/>
+    <version value = "1"/>
 
     <list>
         <mapping class="com.app.qiuhutu.cookman.db.MenuCategory"/>
         <mapping class="com.app.qiuhutu.cookman.db.MenuChildsCategory"/>
+        <mapping class="com.app.qiuhutu.cookman.db.Menu"/>
     </list>
 
 </litepal>
